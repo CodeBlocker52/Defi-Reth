@@ -1,0 +1,8 @@
+.env
+node_modules
+package-lock.json
+tmp
+.ipynb_checkpoints
+tmp.ipynb
+tmp.excalidraw
+tmp.txt
