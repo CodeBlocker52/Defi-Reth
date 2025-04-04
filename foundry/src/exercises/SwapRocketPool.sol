@@ -27,7 +27,16 @@ contract SwapRocketPool {
     function calcEthToReth(
         uint256 ethAmount
     ) external view returns (uint256 rEthAmount, uint256 fee) {
-        //code
+        // Calculate the deposit fee
+        fee = (ethAmount * protocolSettings.getDepositFee()) / CALC_BASE;
+
+        // Calculate the net ETH amount after fee
+        uint256 ethAmountAfterFee = ethAmount - fee;
+
+        // Calculate the rETH amount using the exchange rate
+        rEthAmount = reth.getRethValue(ethAmountAfterFee);
+
+        return (rEthAmount, fee);
     }
 
     /// @notice Calculates the amount of ETH for a given rETH amount.
@@ -37,6 +46,9 @@ contract SwapRocketPool {
         uint256 rEthAmount
     ) external view returns (uint256 ethAmount) {
         // Write your code here
+        ethAmount = reth.getEthValue(rEthAmount);
+
+        return ethAmount;
     }
 
     /// @notice Retrieves the deposit availability status and maximum deposit amount.
