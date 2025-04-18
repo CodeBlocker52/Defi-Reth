@@ -4,12 +4,7 @@ pragma solidity 0.8.26;
 import {IRETH} from "../interfaces/rocket-pool/IRETH.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 import {IVault} from "../interfaces/balancer/IVault.sol";
-import {
-    RETH,
-    WETH,
-    BALANCER_VAULT,
-    BALANCER_POOL_ID_RETH_WETH
-} from "../Constants.sol";
+import {RETH, WETH, BALANCER_VAULT, BALANCER_POOL_ID_RETH_WETH} from "../Constants.sol";
 
 /// @title SwapBalancerV2
 /// @notice This contract facilitates swaps between rETH and WETH using Balancer V2.
@@ -34,33 +29,44 @@ contract SwapBalancerV2 {
         uint256 amountOutMin,
         bytes32 poolId
     ) private returns (uint256 amountOut) {
-        return vault.swap({
-            singleSwap: IVault.SingleSwap({
-                poolId: poolId,
-                kind: IVault.SwapKind.GIVEN_IN,
-                assetIn: tokenIn,
-                assetOut: tokenOut,
-                amount: amountIn,
-                userData: ""
-            }),
-            funds: IVault.FundManagement({
-                sender: address(this),
-                fromInternalBalance: false,
-                recipient: address(this),
-                toInternalBalance: false
-            }),
-            limit: amountOutMin,
-            deadline: block.timestamp
-        });
+        return
+            vault.swap({
+                singleSwap: IVault.SingleSwap({
+                    poolId: poolId,
+                    kind: IVault.SwapKind.GIVEN_IN,
+                    assetIn: tokenIn,
+                    assetOut: tokenOut,
+                    amount: amountIn,
+                    userData: ""
+                }),
+                funds: IVault.FundManagement({
+                    sender: address(this),
+                    fromInternalBalance: false,
+                    recipient: address(this),
+                    toInternalBalance: false
+                }),
+                limit: amountOutMin,
+                deadline: block.timestamp
+            });
     }
 
     /// @notice Swaps WETH to rETH using the Balancer Vault.
     /// @param wethAmountIn The amount of WETH to be swapped.
     /// @param rEthAmountOutMin The minimum amount of rETH to receive.
     /// @dev The caller must approve the contract to transfer WETH on their behalf.
-    function swapWethToReth(uint256 wethAmountIn, uint256 rEthAmountOutMin)
-        external
-    {
+    function swapWethToReth(
+        uint256 wethAmountIn,
+        uint256 rEthAmountOutMin
+    ) external {
+        weth.transferFrom(msg.sender, address(this), wethAmountIn);
+        weth.approve(address(vault), wethAmountIn);
+        swap(
+            WETH,
+            RETH,
+            wethAmountIn,
+            rEthAmountOutMin,
+            BALANCER_POOL_ID_RETH_WETH
+        );
         // Write your code here
     }
 
@@ -68,9 +74,19 @@ contract SwapBalancerV2 {
     /// @param rEthAmountIn The amount of rETH to be swapped.
     /// @param wethAmountOutMin The minimum amount of WETH to receive.
     /// @dev The caller must approve the contract to transfer rETH on their behalf.
-    function swapRethToWeth(uint256 rEthAmountIn, uint256 wethAmountOutMin)
-        external
-    {
+    function swapRethToWeth(
+        uint256 rEthAmountIn,
+        uint256 wethAmountOutMin
+    ) external {
         // Write your code here
+        reth.transferFrom(msg.sender, address(this), rEthAmountIn);
+        reth.approve(address(vault), rEthAmountIn);
+        swap(
+            RETH,
+            WETH,
+            rEthAmountIn,
+            wethAmountOutMin,
+            BALANCER_POOL_ID_RETH_WETH
+        );
     }
 }
